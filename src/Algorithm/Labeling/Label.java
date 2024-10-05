@@ -13,8 +13,6 @@ import java.util.Collections;
 public class Label {
     final int vertexId;
     final double cost;
-//    final double isLoad;
-//    final double remainingDura;
     final double time;
     final double demand;
 
@@ -46,6 +44,9 @@ public class Label {
         if(this.demand > that.demand || this.cost > that.cost || this.time > that.time)
             return false;
         return true;
+//        if(this.demand <= that.demand && this.cost <=  that.cost && this.time <= that.time)
+//            return true;
+//        else return false;
     }
 
     public ArrayList<Integer> getVisitVertexes(){
@@ -94,13 +95,8 @@ public class Label {
     }
 
     public String toString(){
-        ArrayList<Integer> vertexIds = new ArrayList<>();
-        vertexIds.add(this.vertexId);
+        ArrayList<Integer> vertexIds = getVisitVertexes();
 
-        Label label = this;
-        while ((label = label.preLabel) != null)
-            vertexIds.add(label.vertexId);
-        Collections.reverse(vertexIds);
         StringBuilder sb = new StringBuilder();
         vertexIds.forEach(id -> sb.append(id).append("-"));
         sb.deleteCharAt(sb.length() - 1);

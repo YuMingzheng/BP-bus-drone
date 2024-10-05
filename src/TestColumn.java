@@ -1,14 +1,12 @@
 import ilog.concert.*;
 import ilog.cplex.IloCplex;
 
-import java.util.*;
-
 /**
  * @author Yu Mingzheng
  * @date 2024/9/4 19:16
  * @description
  */
-public class Test {
+public class TestColumn {
     public static void main(String[] args) {
         try {
             // 创建CPLEX环境

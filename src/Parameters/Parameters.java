@@ -11,7 +11,7 @@ import java.io.IOException;
  */
 public class Parameters {
     public int numVehicle;
-    public static int numClient;
+    static public int numClient;
     public int vehCapacity;
     public double[][] cost;
     public double[][] distBase;
@@ -24,6 +24,7 @@ public class Parameters {
     public double speed;
     public static double gap = 1e-5;
     public static double EPS = 1e-7;
+    public static double maxRange = 100; // 无人机满电下的飞行里程
     public double maxLength;
     String[] nodeId;
 

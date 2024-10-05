@@ -1,7 +1,7 @@
 package Algorithm.Labeling;
 
 import Parameters.Parameters;
-import VRP.Route;
+import Problem.Route;
 
 import java.util.*;
 
@@ -11,7 +11,6 @@ import java.util.*;
  * @description
  */
 public class SPPRC{
-    public double capacity;
     public int vertexNum;
     public Parameters parameters;
 
@@ -28,7 +27,6 @@ public class SPPRC{
         this.parameters = parameters;
 
         vertexNum = Parameters.numClient +2;
-        capacity = parameters.vehCapacity;
         shortestPaths = new ArrayList<>();
 
         unprocessedLabels = new PriorityQueue<>(new LabelComparator());
@@ -89,7 +87,7 @@ public class SPPRC{
             return ;
         // check当前的extend在载货量、time上是否可行
         double demand = currLabel.demand + parameters.demand[nextVertexId];
-        if(demand > capacity)
+        if(demand > parameters.vehCapacity)
             return ;
         double time = currLabel.time + parameters.s[currLabel.vertexId] + parameters.time[currLabel.vertexId][nextVertexId];
         if(time > parameters.b[nextVertexId])

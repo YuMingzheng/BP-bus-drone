@@ -1,4 +1,4 @@
-package VRP;
+package Problem;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,15 +11,18 @@ import java.util.Collections;
 public class Route implements Cloneable {
     public double cost, Q;    // Q表示该路径在列生成过程中是否被“选择”，即对应的变量y_i是否不等于0
     public ArrayList<Integer> path;
+    public ArrayList<Integer> throughOrder;
 
     public Route() {
         this.path = new ArrayList<>();
         this.cost = 0.0;
+        throughOrder = new ArrayList<>();
     }
 
     public Route clone() throws CloneNotSupportedException {
         Route route = (Route) super.clone();
         route.path = (ArrayList<Integer>) path.clone();
+        route.throughOrder = (ArrayList<Integer>) throughOrder.clone();
         return route;
     }
 
