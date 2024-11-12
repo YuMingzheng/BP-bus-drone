@@ -48,13 +48,13 @@ public class ColumnGen {
         IloObjective objFunc = cplex.addMinimize();
 
         // Set-partitioning模型中的约束，每个约束i对应一个lpMatrix[i]
-        IloRange[] lpMatrix = new IloRange[Parameters.numClient + 1];
+        IloRange[] lpMatrix = new IloRange[Parameters.numClient ];
         for (i = 0; i < Parameters.numClient; i++) {
             lpMatrix[i] = cplex.addRange(1.0 , Double.MAX_VALUE);
 //            lpMatrix[i] = cplex.addRange(1.0 , 1.0);
 //            lpMatrix[i] = cplex.addEq(cplex.numExpr() , 1.0);
         }
-        lpMatrix[i] = cplex.addLe(cplex.numExpr() , 5+0.1); // 添加车数量约束
+//        lpMatrix[i] = cplex.addLe(cplex.numExpr() , 5+0.1); // 添加车数量约束
 
         IloNumVarArray y = new IloNumVarArray();
 
@@ -89,7 +89,7 @@ public class ColumnGen {
                 y.addVar(cplex.numVar(column , 0.0 , Double.MAX_VALUE));
                 Route newRoute = new Route();
                 newRoute.addCity(0);
-                newRoute.addCity(i);
+                newRoute.addCity(i+1);
                 newRoute.addCity(Parameters.numClient + 1);
                 newRoute.setCost(cost);
                 routes.add(newRoute);
@@ -124,8 +124,7 @@ public class ColumnGen {
             // ---------------------------------------------------------
 
             pi = cplex.getDuals(lpMatrix);
-            System.out.println(Arrays.toString(pi));
-            pi = Arrays.copyOfRange(pi , 0 , pi.length-1);
+//            pi = Arrays.copyOfRange(pi , 0 , pi.length-1);
             Map<Integer,Double> lambda = new HashMap<>(Parameters.numClient);
             for (int k = 1; k <= Parameters.numClient; k++) {
                 lambda.put(k, pi[k-1]);
@@ -133,7 +132,7 @@ public class ColumnGen {
             SPPRC spprc = new SPPRC(parameters);
             ArrayList<Route> routesSPPRC = new ArrayList<>();
             spprc.solve(lambda , routesSPPRC);
-
+            System.out.println("  routesSPPRC size : " + routesSPPRC.size());
             if(routesSPPRC.size() > 0){
                 for (Route r : routesSPPRC) {
                     ArrayList<Integer> route = r.getPath();
@@ -149,7 +148,7 @@ public class ColumnGen {
                     cost += parameters.dist[prevCity][Parameters.numClient + 1];
                     column = column.and(cplex.column(objFunc , cost));
 
-                    column = column.and(cplex.column(lpMatrix[lpMatrix.length-1] , 1.0));
+//                    column = column.and(cplex.column(lpMatrix[lpMatrix.length-1] , 1.0));
 
 
                     y.addVar(cplex.numVar(column , 0.0 ,Double.MAX_VALUE, "P"+count++));
@@ -160,7 +159,7 @@ public class ColumnGen {
                 System.out.print("\nCG Iter " + prevI + " Current cost: " + df.format(prevObj[prevI % 100]) + " " + routes.size()+ " routes");
                 System.out.flush();
             }
-            cplex.exportModel("./ExportModel/temp"+prevI+".lp");
+//            cplex.exportModel("./ExportModel/temp"+prevI+".lp");
         }
 
         System.out.println();
@@ -175,8 +174,11 @@ public class ColumnGen {
     public static void main(String[] args) throws IloException{
         double start = System.currentTimeMillis();
 
-        Parameters parameters = new Parameters("C:\\Users\\31706\\Desktop\\exact-algorithm\\instances\\solomon_1\\c101.txt");
-
+        Parameters parameters = new Parameters("C:\\Users\\31706\\Desktop\\exact-algorithm\\instances\\solomon_50\\c202.txt");
+        int vertexNum = Parameters.numClient+2;
+        for (int i = 0; i < vertexNum; i++)
+            for (int j = 0; j < vertexNum; j++)
+                parameters.cost[i][j] = parameters.distBase[i][j];
         ArrayList<Route> bestRoutes = new ArrayList<>();
 
         ColumnGen cg = new ColumnGen();

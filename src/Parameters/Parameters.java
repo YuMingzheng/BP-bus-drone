@@ -20,7 +20,7 @@ public class Parameters {
     public double[][] edges;
     public double[] posX , posY , demand ;
     public int[] a , b , s;
-    public static double bigM;
+    public static double bigM  = 1E5;;
     public double speed;
     public static double gap = 1e-5;
     public static double EPS = 1e-7;
@@ -30,7 +30,7 @@ public class Parameters {
 
     public Parameters(String path){
         speed = 1;
-        bigM = 1E5;
+
         initParams(path);
     }
 

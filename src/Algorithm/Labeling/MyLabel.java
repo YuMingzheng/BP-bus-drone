@@ -1,5 +1,7 @@
 package Algorithm.Labeling;
 
+import Parameters.ExtendGraph;
+
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -45,10 +47,10 @@ public class MyLabel {
 
     public boolean dominate(MyLabel that){
         // TODO 对于到达终点的label，只比较cost
-
+//        if(that.vertexId == ExtendGraph.nodeNumExtendStatic-1)
+//            return false;
 
         if(this.cost <= that.cost
-//                && this.isLoad <= that.isLoad
                 && this.duration >= that.duration
                 && this.serviceTime <= that.serviceTime
                 && MyLabel.isSubset(this.servedReq , that.servedReq)

@@ -53,7 +53,7 @@ public class MySPPRC {
      * @param lambda 对偶值
      * @param bestRouteReturn 返回的最优路径
      */
-    public void solve(Map<Integer , Double> lambda , ArrayList<Route> bestRouteReturn){
+    public void solve(Map<Integer , Double> lambda , ArrayList<Route> bestRouteReturn,double piSingle){
         this.reset();
         this.updateCostMatrix(lambda);
 
@@ -74,7 +74,7 @@ public class MySPPRC {
             【Step 2 & 3】进行extend，判断是否dominated
              */
             for (int i = 0; i < vertexNum; i++) {
-                if(extendGraph.distanceMatExtend[currLabel.vertexId][i] == ExtendGraph.M) {
+                if(extendGraph.distanceMatExtend[currLabel.vertexId][i] == Parameters.bigM) {
                     continue;
                 }
                 this.labelExtension(currLabel , i);
@@ -84,7 +84,7 @@ public class MySPPRC {
         this.optLabels = this.filtering(labelList.get(vertexNum-1));
         for (MyLabel optLabel : optLabels) {
             Route newRoute = new Route();
-            newRoute.setCost(optLabel.cost);
+            newRoute.setCost(optLabel.cost - piSingle);
             ArrayList<Integer> visitVertex = optLabel.getVisitVertexes();
             for (Integer vertex : visitVertex) {
                 newRoute.addCity(vertex);
@@ -119,6 +119,12 @@ public class MySPPRC {
 
 
         cost = currLabel.cost + extendGraph.cost[currLabel.vertexId][nextVertexId];
+
+        // 判断curr->next是否距离可行
+        if(extendGraph.distanceMatExtendChange[currLabel.vertexId][nextVertexId] > Parameters.bigM - Parameters.EPS){
+            return ;
+        }
+
         /*
         Case 1 : j in V_P
          */
@@ -262,6 +268,7 @@ public class MySPPRC {
                 Subcase 3.1.1 : c_ij^2 == 1
                  */
                 if (extendGraph.c2[currLabel.vertexId][nextVertexId] == 1) {
+//                    cost = currLabel.cost;
                     isLoad = currLabel.isLoad;
                     duration = extendGraph.R;
                     arrivalTime = extendGraph.timeWindowExtend.get(nextVertexId)[0];
@@ -457,7 +464,7 @@ public class MySPPRC {
         for (int k = 1; k <= extendGraph.orderNum; k++) {
             dualPrices.put(k, 999d);
         }
-        mySPPRC.solve(dualPrices , bestRoutes);
+        mySPPRC.solve(dualPrices , bestRoutes , 0);
         System.out.println("Time consumption: " + (System.currentTimeMillis() - start) / 1000.0);
 
         for (Route bestRoute : bestRoutes) {

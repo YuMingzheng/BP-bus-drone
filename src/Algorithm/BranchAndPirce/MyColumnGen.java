@@ -10,10 +10,9 @@ import org.json.simple.parser.ParseException;
 import javax.script.ScriptException;
 import java.io.IOException;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.io.BufferedReader;
+import java.io.FileReader;
 
 /**
  * @author Yu Mingzheng
@@ -43,7 +42,8 @@ public class MyColumnGen {
     public double computeColGen(ExtendGraph extendGraph , ArrayList<Route> routes) throws IloException {
         int i, prevCity , city;
         double cost , obj;
-        double[] pi;
+        double[] pi , pi1 ;
+        double pi2;
         boolean onceMore;
 
         // ---------------------------------------------------------
@@ -59,7 +59,9 @@ public class MyColumnGen {
 //            lpMatrix[i] = cplex.addRange(1.0 , 1.0);
             lpMatrix[i] = cplex.addEq(cplex.numExpr() , 1.0);
         }
+
         lpMatrix[i] = cplex.addLe(cplex.numExpr() , extendGraph.droneNum); // 添加车数量约束
+//        lpMatrix[i] = cplex.addEq(cplex.numExpr() , extendGraph.droneNum); // 添加车数量约束
 
         IloNumVarArray y = new IloNumVarArray();
 
@@ -76,8 +78,8 @@ public class MyColumnGen {
 
             // 对于每一列column，从“上”到“下”，依次设置系数【从obj的变量系数，到每一个约束中的变量系数】
             IloColumn column = cplex.column(objFunc , r.getCost());       // 先设置obj的系数
-            for(i = 1; i < r.getPath().size()-1; i++){
-                v = r.getPath().get(i) - 1;
+            for(i = 0; i < r.throughOrder.size(); i++){
+                v = r.throughOrder.get(i)-1;
                 column = column.and(cplex.column(lpMatrix[v] , 1.0));  // 再设置约束中的系数。1.0表示主问题中的a_{ir}的取值
             }
             y.addVar(cplex.numVar(column , 0.0 , Double.MAX_VALUE));   // 两种relaxation的方式都可以
@@ -90,6 +92,8 @@ public class MyColumnGen {
             for(Route r : routes){
                 cost = 0.0;
                 for (int j = 0; j < r.path.size() - 1 ; j++) {
+//                    if(extendGraph.c2[r.path.get(j)][r.path.get(j + 1)] == 1)
+//                        continue;
                     cost += extendGraph.distanceMatExtend[r.path.get(j)][r.path.get(j + 1)];
                 }
                 IloColumn column = cplex.column(objFunc , cost);
@@ -132,14 +136,15 @@ public class MyColumnGen {
 
             pi = cplex.getDuals(lpMatrix);
             System.out.println(Arrays.toString(pi));
-            pi = Arrays.copyOfRange(pi , 0 , pi.length-1);
+            pi1 = Arrays.copyOfRange(pi , 0 , pi.length-1);
+            pi2 = pi[pi.length-1];
             Map<Integer,Double> lambda = new HashMap<>(extendGraph.orderNum+1);
             for (int k = 1; k <= extendGraph.orderNum; k++) {
-                lambda.put(k, pi[k-1]);
+                lambda.put(k, pi1[k-1]);
             }
             MySPPRC spprc = new MySPPRC(extendGraph);
             ArrayList<Route> routesSPPRC = new ArrayList<>();
-            spprc.solve(lambda , routesSPPRC);
+            spprc.solve(lambda , routesSPPRC , pi2);
 
             if(routesSPPRC.size() > 0){
                 for (Route r : routesSPPRC) {
@@ -184,7 +189,7 @@ public class MyColumnGen {
             cplex.exportModel("./ExportModel/temp"+prevI+".lp");
         }
 
-        System.out.println();
+//        System.out.println();
 
         for(i = 0; i < y.getSize() ; i++)
             routes.get(i).setQ(cplex.getValue(y.getElement(i)));
@@ -194,12 +199,43 @@ public class MyColumnGen {
     }
 
     public void initialRoute(ExtendGraph extendGraph , ArrayList<Route> routes){
-        MySPPRC mySPPRC = new MySPPRC(extendGraph);
-        Map<Integer, Double> dualPrices = new HashMap<>(extendGraph.orderNum);
-        for (int k = 1; k <= extendGraph.orderNum; k++) {
-            dualPrices.put(k, 999d);
+        String filePath = "C:\\Users\\31706\\Desktop\\bus+drone\\bus-drone-code\\data\\initial_solution.txt";
+        List<List<Integer>> allLines = new ArrayList<>();
+
+        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                List<Integer> numbers = new ArrayList<>();
+                String[] tokens = line.split(","); // 根据逗号分割
+                for (String token : tokens) {
+                    numbers.add(Integer.parseInt(token.trim())); // 将字符串转换为整数并添加到列表
+                }
+                allLines.add(numbers);
+
+
+                Route route = new Route();
+                for(int i = 0 ; i < numbers.size() ; i++){
+                    route.path.add(numbers.get(i));
+                    if(1<=numbers.get(i) && numbers.get(i) <= extendGraph.orderNum){
+                        route.throughOrder.add(numbers.get(i));
+                    }
+                    if(i != numbers.size()-1){
+                        route.cost += extendGraph.distanceMatExtend[numbers.get(i)][numbers.get(i+1)];
+                    }
+                }
+                routes.add(route);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        mySPPRC.solve(dualPrices , routes);
+
+        Route route = new Route();
+
+
+    }
+
+    public void initialRoute2(ExtendGraph extendGraph , ArrayList<Route> routes){
+
     }
 
     public static void main(String[] args) throws IloException, ScriptException, IOException, ParseException {

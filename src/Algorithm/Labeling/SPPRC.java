@@ -208,5 +208,40 @@ public class SPPRC{
         allFinalLabels.removeIf(label -> label.cost > - Parameters.EPS);
         return allFinalLabels;
     }
+    public static void main(String[] args) {
+        double start = System.currentTimeMillis();
+        Parameters parameters = new Parameters("C:\\Users\\31706\\Desktop\\exact-algorithm\\instances\\solomon_100\\c109.txt");
 
+
+
+        ArrayList<Route> bestRoutes = new ArrayList<>();
+        Map<Integer, Double> dualPrices = new HashMap<>(Parameters.numClient);
+        for (int i = 1; i <= Parameters.numClient; i++)
+            dualPrices.put(i, 7d);
+
+
+        SPPRC sp = new SPPRC(parameters);
+        sp.solve(dualPrices , bestRoutes);
+
+
+
+//        int vertexNum = parameters.numClients+2;
+//        for (int i = 0; i < vertexNum; i++)
+//            for (int j = 0; j < vertexNum; j++)
+//                parameters.cost[i][j] = parameters.distBase[i][j];
+//
+//        for(Map.Entry<Integer ,Double> entry : dualPrices.entrySet())
+//            for (int j = 0; j < vertexNum; j++)
+//                parameters.cost[entry.getKey()][j] = parameters.cost[entry.getKey()][j] - entry.getValue();
+//
+//        SPPRC spprc = new SPPRC();
+//        spprc.shortestPath(parameters , bestRoutes , parameters.numClients);
+
+
+        System.out.println("Time consumption: " + (System.currentTimeMillis() - start) / 1000.0);
+
+        System.out.println("Path: " + bestRoutes);
+        System.out.println(bestRoutes.size());
+
+    }
 }

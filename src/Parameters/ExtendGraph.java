@@ -30,9 +30,11 @@ public class ExtendGraph {
     public Set<TimeNode> allNodeExtendSet;
     public List<TimeNode> allNodeExtend;
     public double[][] distanceMatExtend;
+    public double[][] distanceMatExtendChange;
     public int[][] c1;
     public int[][] c2;
     public int nodeNumExtend;
+
     public ArrayList<double[]> timeWindowExtend;
 
     public Map<TimeNode ,List<TimeNode>> nw;
@@ -42,7 +44,6 @@ public class ExtendGraph {
     public double[][] cost;
 
     public double R;
-    public static double M = 1E5;
     public int orderNum;
     public double velB;
     public double velD;
@@ -50,8 +51,11 @@ public class ExtendGraph {
     public double stopTime;
     public int droneNum;
 
+    public double[][] edges;
+
     public ExtendGraph() throws ScriptException, IOException, ParseException {
-        Data data = new Data("C:\\Users\\31706\\Desktop\\bus+drone\\bus-drone-code\\data\\data_file\\intance5.1.json");
+//        Data data = new Data("C:\\Users\\31706\\Desktop\\bus+drone\\bus-drone-code\\data\\data_file\\intance2.json");
+        Data data = new Data("C:\\Users\\31706\\Desktop\\bus+drone\\bus-drone-code\\data\\write_json.json");
 
         this.R = data.R;
         this.orderNum = data.orderNum;
@@ -218,6 +222,7 @@ public class ExtendGraph {
         this.nodeNumExtend = allNodeExtend.size();
 
         this.distanceMatExtend = new double[nodeNumExtend][nodeNumExtend];
+        this.distanceMatExtendChange = new double[nodeNumExtend][nodeNumExtend];
         this.c1 = new int[nodeNumExtend][nodeNumExtend];
         this.c2 = new int[nodeNumExtend][nodeNumExtend];
 
@@ -237,6 +242,7 @@ public class ExtendGraph {
                 TimeNode nodeI = allNodeExtend.get(i);
                 TimeNode nodeJ = allNodeExtend.get(j);
                 this.distanceMatExtend[i][j] = calcDist(nodeI, nodeJ);
+                this.distanceMatExtendChange[i][j] = calcDist(nodeI, nodeJ);
 
                 if (this.distanceMatExtend[i][j] <= data.R &&
                         !Arrays.equals(nodeI.getLocation(), nodeJ.getLocation()) &&
@@ -246,12 +252,19 @@ public class ExtendGraph {
                 }
             }
         }
+
         for (int i = 0; i < nodeNumExtend; i++) {
-            distanceMatExtend[i][0] = M;
-            distanceMatExtend[nodeNumExtend-1][i] = M;
-            distanceMatExtend[i][i] = M;
+            distanceMatExtend[i][0] = Parameters.bigM;                // 所有点到0的距离为M
+            distanceMatExtend[nodeNumExtend-1][i] = Parameters.bigM;  // 终点-1到所有点的距离为M
+            distanceMatExtend[i][i] = Parameters.bigM;                // i到i的距离为M
+
+            distanceMatExtendChange[i][0] = Parameters.bigM;
+            distanceMatExtendChange[nodeNumExtend-1][i] = Parameters.bigM;
+            distanceMatExtendChange[i][i] = Parameters.bigM;
         }
-        distanceMatExtend[0][nodeNumExtend-1] = M;
+
+        distanceMatExtend[0][nodeNumExtend-1] = Parameters.bigM;
+        distanceMatExtendChange[0][nodeNumExtend-1] = Parameters.bigM;
 
         // new cost
         this.cost = new double[nodeNumExtend][nodeNumExtend];
@@ -261,20 +274,12 @@ public class ExtendGraph {
             timeWindowExtend.add(timeNode.getTimeWindow());
         }
 
+        edges = new double[nodeNumExtend][nodeNumExtend];
     }
+
 
     public static double calcDist(Node x, Node y) {
         return Math.sqrt(Math.pow(x.getX() - y.getX(), 2) + Math.pow(x.getY() - y.getY(), 2));
-    }
-
-    public static void main(String[] args) throws ScriptException, IOException, ParseException {
-
-        int[] b1 = new int[]{1,1,1,1,1};
-        int[] b2 = b1.clone();
-
-        int i = 0;
-
-        b1[1] = 9;
     }
 
 }
