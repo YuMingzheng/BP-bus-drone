@@ -72,7 +72,7 @@ public class SPPRC{
 
         for (Label optLabel : optLabels) {
             Route newRoute = new Route();
-            newRoute.setCost(optLabel.cost);
+            newRoute.setDistance(optLabel.cost);
             ArrayList<Integer> visitVertex = optLabel.getVisitVertexes();
             for (Integer vertex : visitVertex) {
                 newRoute.addCity(vertex);

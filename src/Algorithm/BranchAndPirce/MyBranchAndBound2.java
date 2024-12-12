@@ -5,6 +5,7 @@ import Parameters.Parameters;
 import Problem.Route;
 import ilog.concert.IloException;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -37,7 +38,7 @@ public class MyBranchAndBound2 {
         int i;
     }
 
-    public boolean BBNode(ExtendGraph extendGraph , ArrayList<Route> routes , treeBB branching , ArrayList<Route> bestRoutes , int depth) throws IloException {
+    public boolean BBNode(ExtendGraph extendGraph , ArrayList<Route> routes , treeBB branching , ArrayList<Route> bestRoutes , int depth) throws IloException, IOException {
         int i , j , selectedOrder1 , selectedOrder2 , prevCity , city , bestVal;
         double coef , bestObj , change , CGobj;
         boolean feasible ;
@@ -110,13 +111,131 @@ public class MyBranchAndBound2 {
          */
         }else{
             feasible = true;
+
             selectedOrder1 = -1;
             selectedOrder2 = -1;
-            bestObj = -1.0;
+
             bestVal = 0;
+
+            for (i = 0; i < extendGraph.orderNum; i++) {
+                Arrays.fill(extendGraph.twoOrder[i] , 0);
+            }
+
+            for(Route r : routes){
+                int[] throughOrder = r.throughOrder.stream().mapToInt(k->k).toArray();
+                for (int k = 0; k < throughOrder.length-1; k++) {
+                    for (int l = k+1; l < throughOrder.length; l++) {
+                        extendGraph.twoOrder[throughOrder[k]][throughOrder[l]]+=r.getQ();
+                    }
+                }
+            }
+            for ( i = 0; i < extendGraph.twoOrder.length; i++) {
+                for ( j = i+1; j < extendGraph.twoOrder.length; j++) {
+                    if(extendGraph.twoOrder[i][j]>0.5) extendGraph.twoOrder[i][j]-=0.5;
+                    else extendGraph.twoOrder[i][j]=0.5-extendGraph.twoOrder[i][j];
+                }
+            }
+            double minValue = extendGraph.twoOrder[0][1];
+            int row=0,column=1;
+            for( i=0;i<extendGraph.twoOrder.length;i++){
+                for( j=i+1;j<extendGraph.twoOrder.length;j++){
+                    if(extendGraph.twoOrder[i][j]<minValue){
+                        minValue=extendGraph.twoOrder[i][j];
+                        row=i;
+                        column=j;
+                    }
+                }
+            }
+            selectedOrder1 = row+1;
+            selectedOrder2 = column+1;
+
+
+            for(Route r : routes){
+                if ((r.getQ() > 1e-6) && ((r.getQ() < 1 - 1e-6) || (r.getQ() > 1 + 1e-6))) {
+                    feasible = false;
+                    break;
+                }
+            }
+
+
+            /**
+             * (8) 如果是整数解，那么就找到了一个可行解，判断要不要更新upper lound
+             */
+            if(feasible){
+                if(branching.lowestValue < upperBound){
+                    upperBound = branching.lowestValue;
+                    bestRoutes.clear();
+                    for (Route r : routes) {
+                        if(r.getQ() > Parameters.EPS){
+                            Route optim = new Route();
+                            optim.setDistance(r.getDistance());
+                            optim.path = r.getPath();
+                            optim.setQ(r.getQ());
+                            bestRoutes.add(optim);
+                        }
+                    }
+                    System.out.println("OPT | Lower bound: " + lowerBound + " | Upper bound: " + upperBound + " | Gap: " + ((upperBound - lowerBound) / upperBound) + " | BB Depth: " + depth + " | Local CG cost: " + CGobj + " | " + routes.size() + " routes");
+                    System.out.flush();
+                }else{
+                    System.out.println("FEAS | Lower bound: " + lowerBound + " | Upper bound: " + upperBound + " | Gap: " + ((upperBound - lowerBound) / upperBound) + " | BB Depth: " + depth + " | Local CG cost: " + CGobj + " | " + routes.size() + " routes");
+                }
+                return true;
+
+
+            /**
+             * (9) 否则，找一条边继续进行分支
+             *     这里是先分左支，即selected的两个order要被同一个drone配送，要移除column generation的RLMP中违反该规则的路径：
+             */
+            }else{
+                System.out.println("INTEG INFEAS | Lower bound: " + lowerBound + " | Upper bound: " + upperBound + " | Gap: " + ((upperBound - lowerBound) / upperBound) + " | BB Depth: " + depth + " | Local CG cost: " + CGobj + " | " + routes.size() + " routes");
+                System.out.flush();
+
+                //////////////
+                // branching
+                treeBB newNode1 = new treeBB();
+                newNode1.father = branching;
+                newNode1.branchOrder1 = selectedOrder1;
+                newNode1.branchOrder2 = selectedOrder2;
+                newNode1.branchValue = bestVal; //TODO 没设置bestVal
+                newNode1.lowestValue = -1E10;
+                newNode1.son0 = null;
+
+                // 筛选一下边，去掉不符合左分支的边
+                ArrayList<Route> nodeRoutes = new ArrayList<>();
+                for(Route r : routes){
+                    ArrayList<Integer> throughOrder = r.throughOrder;
+                    boolean accept = throughOrder.contains(selectedOrder1) == throughOrder.contains(selectedOrder2);
+
+                    if(accept){
+                        nodeRoutes.add(r);
+                    }
+                }
+                boolean ok;
+                ok = BBNode(extendGraph , nodeRoutes , newNode1 , bestRoutes , depth+1);
+                if(!ok)
+                    return false;
+
+                branching.son0 = newNode1;
+
+
+                /**
+                 * (10) 然后是右分支，该分支限定两个order被不同drone配送
+                 */
+                treeBB newNode2 = new treeBB();
+                newNode2.father = branching;
+                newNode2.branchOrder1 = selectedOrder1;
+                newNode2.branchOrder2 = selectedOrder2;
+                newNode2.branchValue = 1 - bestVal;
+                newNode2.lowestValue = -1E10;
+                newNode2.son0 = null;
+
+
+            }
 
 
         }
 
+
+    return false;
     }
 }

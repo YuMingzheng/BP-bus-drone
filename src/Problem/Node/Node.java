@@ -13,6 +13,10 @@ public class Node {
         this.x = x;
         this.y = y;
     }
+    public Node(double[] node) {
+        this.x = node[0];
+        this.y = node[1];
+    }
 
     public Node(String nodeStr) {
         // 解析字符串，如 "Node(40, 40)"

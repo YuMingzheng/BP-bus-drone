@@ -84,7 +84,7 @@ public class MySPPRC {
         this.optLabels = this.filtering(labelList.get(vertexNum-1));
         for (MyLabel optLabel : optLabels) {
             Route newRoute = new Route();
-            newRoute.setCost(optLabel.cost - piSingle);
+            newRoute.setDistance(optLabel.cost - piSingle);
             ArrayList<Integer> visitVertex = optLabel.getVisitVertexes();
             for (Integer vertex : visitVertex) {
                 newRoute.addCity(vertex);
@@ -178,7 +178,7 @@ public class MySPPRC {
             /*
             Subcase 1.3 : i in V_P
              */
-            else if(1 <= currLabel.vertexId && currLabel.vertexId <= extendGraph.orderNum){
+            else if(currLabel.vertexId <= extendGraph.orderNum){
                 // 什么也不做
             }
             else{
@@ -219,7 +219,7 @@ public class MySPPRC {
                 /*
                 Subcase 2.2 : i in V_P
                  */
-                else if (1 <= currLabel.vertexId && currLabel.vertexId <= extendGraph.orderNum) {
+                else if (currLabel.vertexId <= extendGraph.orderNum) {
                     if (currLabel.vertexId == nextVertexId - extendGraph.orderNum) {
                         isLoad = currLabel.isLoad - 1;
                         if (isLoad < 0)

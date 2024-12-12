@@ -5,6 +5,7 @@ import Parameters.Parameters;
 import Problem.Route;
 import ilog.concert.IloException;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -39,12 +40,11 @@ public class MyBranchAndBound {
             if(branching.branchValue == 0){ // 禁止这个edge
                 extendGraph.distanceMatExtendChange[branching.branchFrom][branching.branchTo] = Parameters.bigM;
             }else{
-                if(branching.branchValue != 0){
-                    for(i = 0 ; i < branching.branchTo ; i++)
-                        extendGraph.distanceMatExtendChange[branching.branchFrom][i] = Parameters.bigM;
-                    for(i++;i < extendGraph.nodeNumExtend ; i++)
-                        extendGraph.distanceMatExtendChange[branching.branchFrom][i] = Parameters.bigM;
-                }
+                for (i = 0; i < branching.branchTo; i++)
+                    extendGraph.distanceMatExtendChange[branching.branchFrom][i] = Parameters.bigM;
+                for(i++;i < extendGraph.nodeNumExtend ; i++)
+                    extendGraph.distanceMatExtendChange[branching.branchFrom][i] = Parameters.bigM;
+
                 if(branching.branchTo != extendGraph.nodeNumExtend-1){
                     for(i = 0 ; i < branching.branchFrom ; i++)
                         extendGraph.distanceMatExtendChange[i][branching.branchTo] = Parameters.bigM;
@@ -59,7 +59,7 @@ public class MyBranchAndBound {
     }
 
 
-    public boolean BBNode(ExtendGraph extendGraph , ArrayList<Route> routes ,  treeBB branching, ArrayList<Route> bestRoutes, int depth) throws IloException {
+    public boolean BBNode(ExtendGraph extendGraph , ArrayList<Route> routes ,  treeBB branching, ArrayList<Route> bestRoutes, int depth) throws IloException, IOException {
         int i , j , bestEdge1 , bestEdge2 , prevcity , city , bestVal;
         double coef , bestObj , change , CGobj ;
         boolean feasible;
@@ -170,7 +170,6 @@ public class MyBranchAndBound {
                             bestEdge2 = j;
                             //                            bestObj = change;
                             bestVal = (Math.abs(1.0 - coef) > coef) ? 0 : 1;
-                            //                        }
                         }
                     }
                 }
@@ -186,7 +185,7 @@ public class MyBranchAndBound {
                     for (Route r : routes) {
                         if (r.getQ() > Parameters.EPS) {
                             Route optim = new Route();
-                            optim.setCost(r.getCost());
+                            optim.setDistance(r.getDistance());
                             optim.path = r.getPath();
                             optim.setQ(r.getQ());
                             bestRoutes.add(optim);

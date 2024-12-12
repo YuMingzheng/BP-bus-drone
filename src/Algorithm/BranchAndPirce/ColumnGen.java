@@ -8,7 +8,6 @@ import ilog.cplex.IloCplex;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -67,10 +66,10 @@ public class ColumnGen {
                 cost += parameters.dist[prevCity][city];
                 prevCity = city;
             }
-            r.setCost(cost);
+            r.setDistance(cost);
 
             // 对于每一列column，从“上”到“下”，依次设置系数【从obj的变量系数，到每一个约束中的变量系数】
-            IloColumn column = cplex.column(objFunc , r.getCost());       // 先设置obj的系数
+            IloColumn column = cplex.column(objFunc , r.getDistance());       // 先设置obj的系数
             for(i = 1; i < r.getPath().size()-1; i++){
                 v = r.getPath().get(i) - 1;
                 column = column.and(cplex.column(lpMatrix[v] , 1.0));  // 再设置约束中的系数。1.0表示主问题中的a_{ir}的取值
@@ -91,7 +90,7 @@ public class ColumnGen {
                 newRoute.addCity(0);
                 newRoute.addCity(i+1);
                 newRoute.addCity(Parameters.numClient + 1);
-                newRoute.setCost(cost);
+                newRoute.setDistance(cost);
                 routes.add(newRoute);
             }
         }
@@ -152,7 +151,7 @@ public class ColumnGen {
 
 
                     y.addVar(cplex.numVar(column , 0.0 ,Double.MAX_VALUE, "P"+count++));
-                    r.setCost(cost);
+                    r.setDistance(cost);
                     routes.add(r);
                     onceMore = true;
                 }

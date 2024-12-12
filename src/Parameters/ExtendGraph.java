@@ -37,7 +37,7 @@ public class ExtendGraph {
 
     public ArrayList<double[]> timeWindowExtend;
 
-    public Map<TimeNode ,List<TimeNode>> nw;
+    public static Map<TimeNode ,List<TimeNode>> nw;
     /**
      * cost矩阵，用于每次SPPRC中迭代更新
      */
@@ -52,6 +52,11 @@ public class ExtendGraph {
     public int droneNum;
 
     public double[][] edges;
+    public double[][] twoOrder;
+    public List<List<double[]>> V_S_l;
+
+
+    public static Map<Node , List<TimeNode>> sameLocation;
 
     public ExtendGraph() throws ScriptException, IOException, ParseException {
 //        Data data = new Data("C:\\Users\\31706\\Desktop\\bus+drone\\bus-drone-code\\data\\data_file\\intance2.json");
@@ -96,7 +101,7 @@ public class ExtendGraph {
             V_S_L.add(reversedLine);
         }
 
-        allVS = new ArrayList<>(new HashSet<>(allVS)); // 去重
+        allVS = new ArrayList<>(new LinkedHashSet<>(allVS)); // 去重
         allNode.addAll(allVS);
         allNode.add(data.depot);
 
@@ -275,6 +280,52 @@ public class ExtendGraph {
         }
 
         edges = new double[nodeNumExtend][nodeNumExtend];
+        twoOrder = new double[orderNum][orderNum];
+        this.V_S_l = V_S_l_data;
+
+
+        sameLocation = new HashMap<>();
+        for(Node node : allNode){
+            sameLocation.put(node, same_location_all_node(node));
+        }
+
+
+    }
+
+    // 实现same_location_all_node方法：查找位置相同的所有节点
+    public  List<TimeNode> same_location_all_node(Node location) {
+        List<TimeNode> same = new ArrayList<>();
+        double[] locationCoords = location.getLocation();
+        for (TimeNode node : this.allNodeExtend) {
+            if (Arrays.equals(node.getLocation(), locationCoords)) {
+                same.add(node);
+            }
+        }
+        return same;
+    }
+
+    public static TimeNode closest_time_node(Node location , double arrival_time , Node next_location , boolean is_PD){
+        List<TimeNode> locations = sameLocation.get(location);
+        locations.sort(Comparator.comparingDouble(o -> o.getTimeWindow()[0]));
+
+        if(is_PD){
+            return locations.get(0);
+        }
+
+        for (TimeNode loca : locations) {
+            if (loca.getTimeWindow()[0] >= arrival_time){
+                List<TimeNode> neighbors = nw.getOrDefault(loca , null);
+                if(neighbors != null) {
+                    for (TimeNode neighbor : neighbors) {
+                        if (Arrays.equals(neighbor.getLocation(), next_location.getLocation())) {
+                            return loca;
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+
     }
 
 

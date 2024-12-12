@@ -1,5 +1,4 @@
 import Algorithm.BranchAndPirce.MyBranchAndBound;
-import Algorithm.BranchAndPirce.MyColumnGen;
 import Parameters.ExtendGraph;
 import Problem.Route;
 import ilog.concert.IloException;
@@ -32,8 +31,8 @@ public class MainBP {
         System.out.println("solution >>>");
         int nv = 0;
         for (Route bestRoute : bestRoutes) {
-            System.out.println(bestRoute.cost + "  " + bestRoute.path);
-            optCost += bestRoute.cost;
+            System.out.println(bestRoute.distance + "  " + bestRoute.path);
+            optCost += bestRoute.distance;
             nv++;
         }
 

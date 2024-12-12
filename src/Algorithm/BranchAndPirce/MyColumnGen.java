@@ -1,5 +1,6 @@
 package Algorithm.BranchAndPirce;
 
+import Algorithm.CW.CWAlgo;
 import Algorithm.Labeling.MySPPRC;
 import Parameters.ExtendGraph;
 import Problem.Route;
@@ -39,7 +40,7 @@ public class MyColumnGen {
         int getSize(){ return num; }
     }
 
-    public double computeColGen(ExtendGraph extendGraph , ArrayList<Route> routes) throws IloException {
+    public double computeColGen(ExtendGraph extendGraph , ArrayList<Route> routes) throws IloException, IOException {
         int i, prevCity , city;
         double cost , obj;
         double[] pi , pi1 ;
@@ -74,10 +75,10 @@ public class MyColumnGen {
                 cost += extendGraph.distanceMatExtend[prevCity][city];
                 prevCity = city;
             }
-            r.setCost(cost);
+            r.setDistance(cost);
 
             // 对于每一列column，从“上”到“下”，依次设置系数【从obj的变量系数，到每一个约束中的变量系数】
-            IloColumn column = cplex.column(objFunc , r.getCost());       // 先设置obj的系数
+            IloColumn column = cplex.column(objFunc , r.getDistance());       // 先设置obj的系数
             for(i = 0; i < r.throughOrder.size(); i++){
                 v = r.throughOrder.get(i)-1;
                 column = column.and(cplex.column(lpMatrix[v] , 1.0));  // 再设置约束中的系数。1.0表示主问题中的a_{ir}的取值
@@ -88,7 +89,11 @@ public class MyColumnGen {
 
         // 生成初始路径
         if(routes.size() < extendGraph.orderNum){
-            initialRoute(extendGraph , routes);
+//            initialRoute(extendGraph , routes);
+            CWAlgo cwAlgo = new CWAlgo(extendGraph);
+            Route[] ini = cwAlgo.cw_algo();
+            routes.addAll(Arrays.asList(ini));
+
             for(Route r : routes){
                 cost = 0.0;
                 for (int j = 0; j < r.path.size() - 1 ; j++) {
@@ -103,7 +108,7 @@ public class MyColumnGen {
 
                 column = column.and(cplex.column(lpMatrix[extendGraph.orderNum ] , 1.0));
                 y.addVar(cplex.numVar(column , 0.0 , Double.MAX_VALUE));
-                r.setCost(cost);
+                r.setDistance(cost);
             }
         }
 
@@ -127,7 +132,6 @@ public class MyColumnGen {
                 System.out.println("CG: relaxation infeasible");
                 return 1E10;
             }
-
             prevObj[(++prevI) % 100] = cplex.getObjValue();
 
             // ---------------------------------------------------------
@@ -179,7 +183,7 @@ public class MyColumnGen {
 
 
                     y.addVar(cplex.numVar(column , 0.0 ,Double.MAX_VALUE, "P"+count++));
-                    r.setCost(cost);
+                    r.setDistance(cost);
                     routes.add(r);
                     onceMore = true;
                 }
@@ -220,7 +224,7 @@ public class MyColumnGen {
                         route.throughOrder.add(numbers.get(i));
                     }
                     if(i != numbers.size()-1){
-                        route.cost += extendGraph.distanceMatExtend[numbers.get(i)][numbers.get(i+1)];
+                        route.distance += extendGraph.distanceMatExtend[numbers.get(i)][numbers.get(i+1)];
                     }
                 }
                 routes.add(route);
@@ -228,15 +232,8 @@ public class MyColumnGen {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        Route route = new Route();
-
-
     }
 
-    public void initialRoute2(ExtendGraph extendGraph , ArrayList<Route> routes){
-
-    }
 
     public static void main(String[] args) throws IloException, ScriptException, IOException, ParseException {
         double start = System.currentTimeMillis();

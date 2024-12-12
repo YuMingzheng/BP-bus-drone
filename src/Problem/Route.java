@@ -9,13 +9,13 @@ import java.util.Collections;
  * @description
  */
 public class Route implements Cloneable {
-    public double cost, Q;    // Q表示该路径在列生成过程中是否被“选择”，即对应的变量y_i是否不等于0
+    public double distance, Q;    // Q表示该路径在列生成过程中是否被“选择”，即对应的变量y_i是否不等于0
     public ArrayList<Integer> path;
     public ArrayList<Integer> throughOrder;
 
     public Route() {
         this.path = new ArrayList<>();
-        this.cost = 0.0;
+        this.distance = 0.0;
         throughOrder = new ArrayList<>();
     }
 
@@ -30,12 +30,12 @@ public class Route implements Cloneable {
         this.path.add(city);
     }
 
-    public void setCost(double c) {
-        this.cost = c;
+    public void setDistance(double c) {
+        this.distance = c;
     }
 
-    public double getCost() {
-        return this.cost;
+    public double getDistance() {
+        return this.distance;
     }
 
     public void setQ(double a) {
@@ -55,6 +55,8 @@ public class Route implements Cloneable {
     }
 
     public String toString(){
-        return "【Path : " + path.toString() + " , Cost : " + cost + "】\n";
+        return "Route@[served_order: " + throughOrder.toString() + ", distance: " + distance + ", path: " + path.toString() + "]";
+
+//        return "【Path : " + path.toString() + " , Cost : " + cost + "】\n";
     }
 }
