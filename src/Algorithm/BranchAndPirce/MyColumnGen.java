@@ -299,7 +299,7 @@ public class MyColumnGen {
     public static void main(String[] args) throws IloException, ScriptException, IOException, ParseException {
 
         double start = System.currentTimeMillis();
-        String instanceName = "50_1_1_1_26166";
+        String instanceName = "80_4_8_2_89410";
         String path = "D:\\硕士毕设\\bus+drone\\bus-drone-code\\data\\choose_model_instance\\" + instanceName + ".json";
 
         ExtendGraph extendGraph = new ExtendGraph(path , -1 , "rf");
