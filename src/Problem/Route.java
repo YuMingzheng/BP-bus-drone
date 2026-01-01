@@ -1,7 +1,6 @@
 package Problem;
 
 import java.util.ArrayList;
-import java.util.Collections;
 
 /**
  * @author Yu Mingzheng
@@ -9,7 +8,7 @@ import java.util.Collections;
  * @description
  */
 public class Route implements Cloneable {
-    public double distance, Q;    // Q表示该路径在列生成过程中是否被“选择”，即对应的变量y_i是否不等于0
+    public double distance, Q;
     public ArrayList<Integer> path;
     public ArrayList<Integer> throughOrder;
 
@@ -50,13 +49,8 @@ public class Route implements Cloneable {
         return this.path;
     }
 
-    public void reversePath() {
-        Collections.reverse(path);
-    }
-
     public String toString(){
-        return "Route@[served_order: " + throughOrder.toString() + ", distance: " + distance + ", path: " + path.toString() + "]";
+        return "Route:[served_order: " + throughOrder.toString() + ", distance: " + distance + ", path: " + path.toString() + "]";
 
-//        return "【Path : " + path.toString() + " , Cost : " + cost + "】\n";
     }
 }

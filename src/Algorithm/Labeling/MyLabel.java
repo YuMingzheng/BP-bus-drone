@@ -51,10 +51,11 @@ public class MyLabel {
 //            return false;
 
         if(this.cost <= that.cost
-                && this.duration >= that.duration
-                && this.serviceTime <= that.serviceTime
-                && MyLabel.isSubset(this.servedReq , that.servedReq)
-                && MyLabel.areEqual(this.openReq , that.openReq)
+            && this.duration >= that.duration
+//            && this.serviceTime <= that.serviceTime
+            && this.arrivalTime <= that.arrivalTime
+            && MyLabel.isSubset(this.servedReq , that.servedReq)
+            && MyLabel.areEqual(this.openReq , that.openReq)
         ) return true;
         else return false;
     }

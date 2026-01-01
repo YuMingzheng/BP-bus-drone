@@ -1,13 +1,15 @@
 package Parameters;
 
-import Parameters.Data;
+//import IO.CallModel;
+import IO.CallModel;
+import IO.ModelInputData;
+import Old.Parameters;
 import Problem.Node.Node;
 import Problem.Node.TimeNode;
 import org.json.simple.parser.ParseException;
 
 import javax.script.ScriptException;
 import java.io.IOException;
-import java.sql.Time;
 import java.util.*;
 
 /**
@@ -30,6 +32,7 @@ public class ExtendGraph {
     public Set<TimeNode> allNodeExtendSet;
     public List<TimeNode> allNodeExtend;
     public double[][] distanceMatExtend;
+    public double[][] timeMatDroneExtend;
     public double[][] distanceMatExtendChange;
     public int[][] c1;
     public int[][] c2;
@@ -50,17 +53,19 @@ public class ExtendGraph {
     public double sTime = 0;
     public double stopTime;
     public int droneNum;
+    public double T;
 
     public double[][] edges;
     public double[][] twoOrder;
     public List<List<double[]>> V_S_l;
 
+    public double average_distance;
 
     public static Map<Node , List<TimeNode>> sameLocation;
 
-    public ExtendGraph() throws ScriptException, IOException, ParseException {
-//        Data data = new Data("C:\\Users\\31706\\Desktop\\bus+drone\\bus-drone-code\\data\\data_file\\intance2.json");
-        Data data = new Data("C:\\Users\\31706\\Desktop\\bus+drone\\bus-drone-code\\data\\write_json.json");
+    public ExtendGraph(String path , double useModel , String modelName) throws ScriptException, IOException, ParseException {
+
+        Data data = new Data(path);
 
         this.R = data.R;
         this.orderNum = data.orderNum;
@@ -68,7 +73,7 @@ public class ExtendGraph {
         this.velD = data.velD;
         this.stopTime = data.stopTime;
         this.droneNum = data.droneNum;
-
+        this.T = data.T;
         this.allNode = new ArrayList<>();
         allNode.add(data.depot);
 
@@ -231,6 +236,8 @@ public class ExtendGraph {
         this.c1 = new int[nodeNumExtend][nodeNumExtend];
         this.c2 = new int[nodeNumExtend][nodeNumExtend];
 
+
+        int c1PlusC2 = 0;
         // Build c2 matrix
         for (Map.Entry<TimeNode, List<TimeNode>> entry : nw.entrySet()) {
             TimeNode i = entry.getKey();
@@ -238,6 +245,7 @@ public class ExtendGraph {
             for (TimeNode j : entry.getValue()) {
                 int idx_j = allNodeExtend.indexOf(j);
                 this.c2[idx_i][idx_j] = 1;
+                c1PlusC2++;
             }
         }
 
@@ -252,8 +260,11 @@ public class ExtendGraph {
                 if (this.distanceMatExtend[i][j] <= data.R &&
                         !Arrays.equals(nodeI.getLocation(), nodeJ.getLocation()) &&
                         nodeI.getTimeWindow()[0] < nodeJ.getTimeWindow()[1] &&
-                        this.c2[i][j] != 1) {
+                        this.c2[i][j] != 1
+                ) {
+
                     this.c1[i][j] = 1;
+                    c1PlusC2++;
                 }
             }
         }
@@ -290,6 +301,78 @@ public class ExtendGraph {
         }
 
 
+        int n = distanceMatExtend.length;
+        double totalDistance = 0.0;
+        int count = 0;
+
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                totalDistance += distanceMatExtend[i][j];
+                count++;
+            }
+        }
+
+        average_distance = totalDistance / count;
+
+
+        if(useModel != -1){
+            ModelInputData[] modelInputDatas = new ModelInputData[c1PlusC2];
+            int counter = 0;
+            for (int i = 0; i < this.nodeNumExtend; i++) {
+                for (int j = 0; j < this.nodeNumExtend; j++) {
+                    if(this.c1[i][j] == 1 || this.c2[i][j] == 1){
+                        ModelInputData modelInputData = getModelInputData(i, j, data);
+                        modelInputDatas[counter] = modelInputData;
+                        counter ++;
+                    }
+                }
+            }
+
+            boolean[] pred = CallModel.predict(modelInputDatas , useModel , modelName);
+            counter = 0;
+            for (int i = 0; i < this.nodeNumExtend; i++) {
+                for (int j = 0; j < this.nodeNumExtend; j++) {
+                    if(this.c1[i][j] == 1 || this.c2[i][j] == 1){
+                        if(!pred[counter]){
+                            this.c1[i][j] = 0;
+                            this.c2[i][j] = 0;
+                        }
+                        counter++;
+                    }
+                }
+            }
+        }
+    }
+
+    private ModelInputData getModelInputData(int i, int j, Data data) {
+        double edge_distance = distanceMatExtend[i][j] / average_distance;
+        double depot_2_i = distanceMatExtend[0][i] / average_distance;
+        double depot_2_j = distanceMatExtend[0][i] / average_distance;
+        double i_time_l = allNodeExtend.get(i).getTimeWindow()[0] / data.T;
+        double i_time_r = allNodeExtend.get(i).getTimeWindow()[1] / data.T;
+        double j_time_l = allNodeExtend.get(j).getTimeWindow()[0] / data.T;
+        double j_time_r = allNodeExtend.get(j).getTimeWindow()[1] / data.T;
+
+        int edge_type = this.c1[i][j] == 1 ? 1 : 2;
+        int has_customer;
+        if((1 <= i && i <= this.orderNum*2+1) || ((1 <= j && j <= this.orderNum*2+1))){
+             has_customer = 1;
+        }else{
+            has_customer = 0;
+        }
+
+        ModelInputData modelInputData = new ModelInputData();
+
+        modelInputData.setDepot_2_i(depot_2_i);
+        modelInputData.setDepot_2_j(depot_2_j);
+        modelInputData.setI_time_l(i_time_l);
+        modelInputData.setI_time_r(i_time_r);
+        modelInputData.setJ_time_l(j_time_l);
+        modelInputData.setJ_time_r(j_time_r);
+        modelInputData.setEdge_type(edge_type);
+        modelInputData.setHas_customer(has_customer);
+        modelInputData.setEdge_distance(edge_distance);
+        return modelInputData;
     }
 
     // 实现same_location_all_node方法：查找位置相同的所有节点

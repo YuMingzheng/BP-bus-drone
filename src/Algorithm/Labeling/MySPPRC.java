@@ -1,6 +1,6 @@
 package Algorithm.Labeling;
 
-import Parameters.Parameters;
+import Old.Parameters;
 import Parameters.ExtendGraph;
 import Problem.Route;
 import org.json.simple.parser.ParseException;
@@ -82,7 +82,14 @@ public class MySPPRC {
         }
 
         this.optLabels = this.filtering(labelList.get(vertexNum-1));
+
+//        System.out.println("\n -- opt label size : " + optLabels.size());
+
+        this.optLabels.sort(Comparator.comparingDouble(label -> label.cost));
+
+
         for (MyLabel optLabel : optLabels) {
+
             Route newRoute = new Route();
             newRoute.setDistance(optLabel.cost - piSingle);
             ArrayList<Integer> visitVertex = optLabel.getVisitVertexes();
@@ -95,6 +102,7 @@ public class MySPPRC {
                 }
             }
             bestRouteReturn.add(newRoute);
+
         }
 
 
@@ -124,6 +132,7 @@ public class MySPPRC {
         if(extendGraph.distanceMatExtendChange[currLabel.vertexId][nextVertexId] > Parameters.bigM - Parameters.EPS){
             return ;
         }
+
 
         /*
         Case 1 : j in V_P
@@ -455,25 +464,4 @@ public class MySPPRC {
         return allFinalLabels;
     }
 
-    public static void main(String[] args) throws ScriptException, IOException, ParseException {
-        double start = System.currentTimeMillis();
-        ExtendGraph extendGraph = new ExtendGraph();
-        MySPPRC mySPPRC = new MySPPRC(extendGraph);
-        ArrayList<Route> bestRoutes = new ArrayList<>();
-        Map<Integer, Double> dualPrices = new HashMap<>(extendGraph.orderNum);
-        for (int k = 1; k <= extendGraph.orderNum; k++) {
-            dualPrices.put(k, 999d);
-        }
-        mySPPRC.solve(dualPrices , bestRoutes , 0);
-        System.out.println("Time consumption: " + (System.currentTimeMillis() - start) / 1000.0);
-
-        for (Route bestRoute : bestRoutes) {
-            System.out.println(bestRoute);
-            for (Integer i : bestRoute.path) {
-                System.out.print(extendGraph.allNodeExtend.get(i) + " -> ");
-            }
-            System.out.println("End");
-
-        }
-    }
 }

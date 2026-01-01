@@ -167,44 +167,6 @@ public class AStar {
     }
 
 
-    // Example usage
-    public static void main(String[] args) throws ScriptException, IOException, ParseException {
-        Data data = new Data("C:\\Users\\31706\\Desktop\\bus+drone\\bus-drone-code\\data\\write_json.json");
-        ExtendGraph extendGraph = new ExtendGraph();
-
-        double[] start = extendGraph.allNode.get(0).getLocation();
-        double[] goal = extendGraph.allNode.get(14).getLocation();
-        double R = 15;            // Maximum walking distance
-        double walkPenalty = 10;  // Walking penalty
-
-        Result result = aStar(data.V_S_l, start, goal, R, walkPenalty);
-
-        if (result.path != null) {
-            System.out.print("Path: [");
-            for (double[] doubles : result.path) {
-                System.out.print(Arrays.toString(doubles) + ", ");
-            } System.out.println("]");
-
-            System.out.print("Path: [");
-            for (double[] doubles : result.path) {
-                // my indexOf
-                boolean find = false;
-                for (int k = 0; k < extendGraph.nodeNum; k++) {
-                    if(Arrays.equals(doubles, extendGraph.allNode.get(k).getLocation())){
-                        find = true;
-                        System.out.print(k + ", ");
-                        break;
-                    }
-                }
-                if(!find){System.out.println("my indexOf Exception");}
-            } System.out.println("]");
-
-            System.out.println("Cost: " + result.cost);
-            System.out.println("Distance: " + result.distance);
-        } else {
-            System.out.println("Goal cannot be reached.");
-        }
-    }
 }
 
 

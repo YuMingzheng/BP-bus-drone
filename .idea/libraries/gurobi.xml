@@ -1,7 +1,7 @@
 <component name="libraryTable">
-  <library name="cplex">
+  <library name="gurobi">
     <CLASSES>
-      <root url="jar://E:/IBM/ILOG/CPLEX_Studio1263/cplex/lib/cplex.jar!/" />
+      <root url="jar://E:/gurobi/win64/lib/gurobi.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

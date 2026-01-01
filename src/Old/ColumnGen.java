@@ -1,7 +1,5 @@
-package Algorithm.BranchAndPirce;
+package Old;
 
-import Algorithm.Labeling.SPPRC;
-import Parameters.Parameters;
 import Problem.Route;
 import ilog.concert.*;
 import ilog.cplex.IloCplex;
@@ -96,7 +94,7 @@ public class ColumnGen {
         }
 
         cplex.setOut(null);
-        cplex.exportModel("temp.lp");
+//        cplex.exportModel("temp.lp");
         // ---------------------------------------------------------
         // 列生成，不断迭代，往RMP的Ω中添加新的列
         // ---------------------------------------------------------

@@ -1,4 +1,4 @@
-package Parameters;
+package Old;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -23,7 +23,7 @@ public class Parameters {
     public static double bigM  = 1E5;;
     public double speed;
     public static double gap = 1e-5;
-    public static double EPS = 1e-7;
+    public static double EPS = 1e-5;
     public static double maxRange = 100; // 无人机满电下的飞行里程
     public double maxLength;
     String[] nodeId;

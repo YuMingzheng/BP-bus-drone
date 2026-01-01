@@ -231,7 +231,7 @@ public class CWAlgo {
 
         while(routes.length > this.extendGraph.droneNum){
             Map<List<Integer> ,Double> savings = calculate_savings(routes);
-            System.out.println(savings);
+//            System.out.println(savings);
 
             boolean flag = true;
             for (Map.Entry<List<Integer>, Double> entry : savings.entrySet()) {
@@ -279,27 +279,5 @@ public class CWAlgo {
 
         return routes_return;
     }
-
-
-
-    public static void main(String[] args) throws ScriptException, IOException, ParseException {
-        Data data = new Data("C:\\Users\\31706\\Desktop\\bus+drone\\bus-drone-code\\data\\write_json.json");
-        ExtendGraph extendGraph = new ExtendGraph();
-
-        CWAlgo cwAlgo = new CWAlgo(extendGraph);
-        Route[] initial_routes = cwAlgo.gen_initial_routes();
-
-        LinkedHashMap<List<Integer> , Double> savings = cwAlgo.calculate_savings(initial_routes);
-//        savings.forEach((key , value) -> System.out.println(key +" : " +  value));
-
-//        ArrayList<TimeNode> converted = cwAlgo.convert_route(initial_routes[0]);
-//        converted.forEach(System.out::println);
-
-        Route[] cw_routes = cwAlgo.cw_algo();
-
-
-        int i = 0 ;
-    }
-
 
 }

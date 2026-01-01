@@ -44,15 +44,27 @@ public class Data {
         ScriptEngineManager mgr = new ScriptEngineManager();
         ScriptEngine engine = mgr.getEngineByName("JavaScript");
 
-        T = parseDouble(jsonObj.get("T"), engine);
-        droneNum = parseInt(jsonObj.get("drone_num"), engine);
-        orderNum = parseInt(jsonObj.get("order_num"), engine);
-        lineNum = parseInt(jsonObj.get("line_num"), engine);
-        busIntv = parseDouble(jsonObj.get("bus_intv"), engine);
-        velB = parseDouble(jsonObj.get("vel_b"), engine);
-        velD = parseDouble(jsonObj.get("vel_d"), engine);
-        R = parseDouble(jsonObj.get("R"), engine);
-        resversRunIntv = parseDouble(jsonObj.get("resvers_runn_intv"), engine);
+//        T = parseDouble(jsonObj.get("T"), engine);
+//        droneNum = parseInt(jsonObj.get("drone_num"), engine);
+//        orderNum = parseInt(jsonObj.get("order_num"), engine);
+//        lineNum = parseInt(jsonObj.get("line_num"), engine);
+//        busIntv = parseDouble(jsonObj.get("bus_intv"), engine);
+//        velB = parseDouble(jsonObj.get("vel_b"), engine);
+//        velD = parseDouble(jsonObj.get("vel_d"), engine);
+//        R = parseDouble(jsonObj.get("R"), engine);
+//        resversRunIntv = parseDouble(jsonObj.get("resvers_runn_intv"), engine);
+//        stopTime = parseDouble(jsonObj.get("stop_time"), engine);
+
+        T = Double.parseDouble((String) jsonObj.get("T"));
+        droneNum = Integer.parseInt((String) jsonObj.get("drone_num"));
+        orderNum = Integer.parseInt((String) jsonObj.get("order_num"));
+        lineNum = Integer.parseInt(((String) jsonObj.get("line_num")).split(" ")[0]) * 2;
+        busIntv = Double.parseDouble((String) jsonObj.get("bus_intv"));
+        velB = Double.parseDouble((String) jsonObj.get("vel_b"));
+        velD = Double.parseDouble((String) jsonObj.get("vel_d"));
+        R = Double.parseDouble((String) jsonObj.get("R"));
+        resversRunIntv = Double.parseDouble((String) jsonObj.get("resvers_runn_intv"));
+        stopTime = Double.parseDouble((String) jsonObj.get("stop_time"));
 
         depot = new Node((String) jsonObj.get("depot"));
         depot2 = new Node((String) jsonObj.get("depot2"));
@@ -63,7 +75,7 @@ public class Data {
 
         V_S_l = parse3DList((String) jsonObj.get("V_S_l"));
 
-        stopTime = parseDouble(jsonObj.get("stop_time"), engine);
+
     }
 
     private int parseInt(Object obj, ScriptEngine engine) throws ScriptException {
@@ -71,10 +83,12 @@ public class Data {
         return ((Number) engine.eval(str)).intValue();
     }
 
+
     private double parseDouble(Object obj, ScriptEngine engine) throws ScriptException {
         String str = obj.toString().replace("\"", "").trim();
         return ((Number) engine.eval(str)).doubleValue();
     }
+
 
     private double[][][] parse3DArray(String str) throws ScriptException {
         // 解析字符串，如 "np.array([[[20, 70], [75, 50]]])"

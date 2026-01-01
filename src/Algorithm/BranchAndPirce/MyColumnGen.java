@@ -2,6 +2,7 @@ package Algorithm.BranchAndPirce;
 
 import Algorithm.CW.CWAlgo;
 import Algorithm.Labeling.MySPPRC;
+import IO.IO;
 import Parameters.ExtendGraph;
 import Problem.Route;
 import ilog.concert.*;
@@ -9,6 +10,7 @@ import ilog.cplex.IloCplex;
 import org.json.simple.parser.ParseException;
 
 import javax.script.ScriptException;
+import java.io.File;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.*;
@@ -21,8 +23,8 @@ import java.io.FileReader;
  * @description
  */
 
-
 public class MyColumnGen {
+
     static class IloNumVarArray{
         int num = 0;
         IloNumVar[] array = new IloNumVar[32];
@@ -89,10 +91,10 @@ public class MyColumnGen {
 
         // 生成初始路径
         if(routes.size() < extendGraph.orderNum){
-//            initialRoute(extendGraph , routes);
             CWAlgo cwAlgo = new CWAlgo(extendGraph);
             Route[] ini = cwAlgo.cw_algo();
             routes.addAll(Arrays.asList(ini));
+//            System.out.println(Arrays.toString(ini));
 
             for(Route r : routes){
                 cost = 0.0;
@@ -113,7 +115,6 @@ public class MyColumnGen {
         }
 
         cplex.setOut(null);
-        cplex.exportModel("new model.lp");
         // ---------------------------------------------------------
         // 列生成，不断迭代，往RMP的Ω中添加新的列
         // ---------------------------------------------------------
@@ -139,7 +140,7 @@ public class MyColumnGen {
             // ---------------------------------------------------------
 
             pi = cplex.getDuals(lpMatrix);
-            System.out.println(Arrays.toString(pi));
+//            System.out.println(Arrays.toString(pi));
             pi1 = Arrays.copyOfRange(pi , 0 , pi.length-1);
             pi2 = pi[pi.length-1];
             Map<Integer,Double> lambda = new HashMap<>(extendGraph.orderNum+1);
@@ -150,7 +151,7 @@ public class MyColumnGen {
             ArrayList<Route> routesSPPRC = new ArrayList<>();
             spprc.solve(lambda , routesSPPRC , pi2);
 
-            if(routesSPPRC.size() > 0){
+            if(!routesSPPRC.isEmpty()){
                 for (Route r : routesSPPRC) {
                     ArrayList<Integer> route = r.getPath();
                     prevCity = route.get(1);
@@ -187,13 +188,73 @@ public class MyColumnGen {
                     routes.add(r);
                     onceMore = true;
                 }
-                System.out.print("\nCG Iter " + prevI + " Current cost: " + df.format(prevObj[prevI % 100]) + " " + routes.size()+ " routes   ");
-                System.out.flush();
+//                System.out.print("\nCG Iter " + prevI + " Current cost: " + df.format(prevObj[prevI % 100]) + " " + routes.size()+ " routes   ");
+//                System.out.flush();
+            }else{
+//                System.out.println("CG终止");
+
+
+                cplex = new IloCplex();
+                objFunc = cplex.addMinimize();
+
+                // Set-partitioning模型中的约束，每个约束i对应一个lpMatrix[i]
+                lpMatrix = new IloRange[extendGraph.orderNum + 1];
+                for (i = 0; i < extendGraph.orderNum; i++) {
+                    lpMatrix[i] = cplex.addEq(cplex.numExpr() , 1.0);
+                }
+
+                lpMatrix[i] = cplex.addLe(cplex.numExpr() , extendGraph.droneNum); // 添加车数量约束
+
+                y = new IloNumVarArray();
+
+                for (Route r : routes) {
+                    ArrayList<Integer> route = r.getPath();
+                    prevCity = route.get(1);
+                    cost = extendGraph.distanceMatExtend[0][prevCity];
+                    IloColumn column = null;
+                    boolean ini = false;
+                    if (1 <= prevCity && prevCity <= extendGraph.orderNum) {
+                        column = cplex.column(lpMatrix[route.get(1) - 1] , 1.0);
+                        ini = true;
+                    }
+                    for(i = 2 ; i < route.size() -1 ; i++){
+                        city = route.get(i);
+                        cost += extendGraph.distanceMatExtend[prevCity][city];
+                        prevCity = city;
+                        if (1 <= prevCity && prevCity <= 1 + extendGraph.orderNum) {
+                            if(ini) {
+                                column = column.and(cplex.column(lpMatrix[route.get(i) - 1], 1.0));
+                            }else{
+                                column = cplex.column(lpMatrix[route.get(i) - 1] , 1.0);
+                                ini = true;
+                            }
+                        }
+                    }
+
+
+                    cost += extendGraph.distanceMatExtend[prevCity][extendGraph.nodeNumExtend - 1];
+                    column = column.and(cplex.column(objFunc , cost));
+
+                    column = column.and(cplex.column(lpMatrix[lpMatrix.length-1] , 1.0));
+
+
+                    y.addVar(cplex.intVar(column ,0,1, "P"+count++));
+                    r.setDistance(cost);
+                }
+//                System.out.print("\nCG IP Model " + " Current cost: " + df.format(prevObj[prevI % 100]) + " " + routes.size()+ " routes 【END】\n");
+//                System.out.flush();
+
+                cplex.setOut(null);
+//                cplex.exportModel("./ExportModel/temp"+prevI+".lp");
+
+                if(!cplex.solve()){
+                    System.out.println("CG IP 无解");
+                    return 1E10;
+                }
             }
-            cplex.exportModel("./ExportModel/temp"+prevI+".lp");
+//            cplex.exportModel("./ExportModel/temp"+prevI+".lp");
         }
 
-//        System.out.println();
 
         for(i = 0; i < y.getSize() ; i++)
             routes.get(i).setQ(cplex.getValue(y.getElement(i)));
@@ -203,7 +264,7 @@ public class MyColumnGen {
     }
 
     public void initialRoute(ExtendGraph extendGraph , ArrayList<Route> routes){
-        String filePath = "C:\\Users\\31706\\Desktop\\bus+drone\\bus-drone-code\\data\\initial_solution.txt";
+        String filePath = "D:\\硕士毕设\\bus+drone\\bus-drone-code\\data\\initial_solution.txt";
         List<List<Integer>> allLines = new ArrayList<>();
 
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
@@ -236,24 +297,45 @@ public class MyColumnGen {
 
 
     public static void main(String[] args) throws IloException, ScriptException, IOException, ParseException {
+
         double start = System.currentTimeMillis();
-        ExtendGraph extendGraph = new ExtendGraph();
+        String instanceName = "50_1_1_1_26166";
+        String path = "D:\\硕士毕设\\bus+drone\\bus-drone-code\\data\\choose_model_instance\\" + instanceName + ".json";
+
+        ExtendGraph extendGraph = new ExtendGraph(path , -1 , "rf");
         ArrayList<Route> bestRoutes = new ArrayList<>();
         MyColumnGen cg = new MyColumnGen();
-        double obj = cg.computeColGen(extendGraph , bestRoutes);
-        System.out.println("Obj : " + obj);
-        System.out.println("Time consumption: " + (System.currentTimeMillis() - start) / 1000.0);
+        double obj = cg.computeColGen(extendGraph , bestRoutes );
 
-        for (int i = 0; i < bestRoutes.size(); i++)
-            if(bestRoutes.get(i).getQ() != 0)
-                System.out.println("Q : " + bestRoutes.get(i).getQ() + " " +  bestRoutes.get(i));
-        System.out.println("Path size: " + bestRoutes.size());
-        //-------------------------------------------
+        System.out.print("Obj :     " + obj);
+        System.out.println("      Time consumption:     " + (System.currentTimeMillis() - start) / 1000.0);
+        for (Route bestRoute : bestRoutes)
+            if (bestRoute.getQ() != 0)
+                System.out.println(" Q : " + bestRoute.getQ() + " " + bestRoute);
+        System.out.println("  Path size: " + bestRoutes.size());
 
-//        ExtendGraph extendGraph = new ExtendGraph();
-//        ArrayList<Route> routes = new ArrayList<>();
-//        MyColumnGen cg = new MyColumnGen();
-//        cg.initialRoute(extendGraph, routes);
-//        System.out.println(routes);
+
+//        for (File file : IO.getFilesInDirectory("D:\\硕士毕设\\bus+drone\\bus-drone-code\\data\\gurobi_algo_instance")) {
+//            System.out.print("---------" + file.getName() + " --- ");
+//            double start = System.currentTimeMillis();
+////            String instanceName = "60_2_4_1_4009";
+////            String path = "D:\\硕士毕设\\bus+drone\\bus-drone-code\\data\\gurobi_algo_instance\\50_1_1_1_8545.json";
+////            String path = "D:\\硕士毕设\\bus+drone\\bus-drone-code\\data\\threshold_instance\\" + instanceName + ".json";
+////            ExtendGraph extendGraph = new ExtendGraph(path , true);
+////            ExtendGraph extendGraph = new ExtendGraph(path , -1);
+//            ExtendGraph extendGraph = new ExtendGraph("D:\\硕士毕设\\bus+drone\\bus-drone-code\\data\\gurobi_algo_instance\\" + file.getName() , -1);
+//            ArrayList<Route> bestRoutes = new ArrayList<>();
+//            MyColumnGen cg = new MyColumnGen();
+//            double obj = cg.computeColGen(extendGraph , bestRoutes );
+//
+//            System.out.print("Obj :     " + obj);
+//            System.out.println("      Time consumption:     " + (System.currentTimeMillis() - start) / 1000.0);
+////        for (Route bestRoute : bestRoutes)
+////            if (bestRoute.getQ() != 0)
+////                System.out.println(" Q : " + bestRoute.getQ() + " " + bestRoute);
+////            System.out.println("  Path size: " + bestRoutes.size());
+//        }
+
+
     }
 }

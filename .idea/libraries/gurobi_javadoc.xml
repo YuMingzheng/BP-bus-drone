@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="gurobi-javadoc">
+    <CLASSES />
+    <JAVADOC>
+      <root url="jar://E:/gurobi/win64/lib/gurobi-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES />
+  </library>
+</component>
